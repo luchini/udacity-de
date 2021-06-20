@@ -39,46 +39,46 @@ Once the user activity is stored in our relational database, the Sparkify data a
 
 * When are our users using sparkify? Perhaps unsurprisingly, Friday afternoons and evenings are most popular
 ```
-select  t.weekday,
+SELECT  t.weekday,
         t.hour,
-        count(*) as count
-    from songplays s 
-    join time t on t.start_time = s.start_time 
-    group by 
+        COUNT(*) AS count
+    FROM songplays s 
+    JOIN time t ON t.start_time = s.start_time 
+    GROUP BY
       t.weekday, 
       t.hour 
-    order by count desc 
-    limit 10 ;
+    ORDER BY count desc 
+    LIMIT 10 ;
 ```
 
 * What are our most popular location markets? Note: it would be important to bring in population data into a location-based dimension table in order to better understand relative popularity.
 ```
-select  location, 
+SELECT  location, 
         count(distinct user_id) as user_count, 
         count(distinct session_id) as session_count 
-    from songplays 
-    group by location
-    order by user_count desc 
-    limit 5;
+    FROM songplays 
+    GROUP BY location
+    ORDER BY user_count DESC 
+    LIMIT 5;
 ```
 
 * We can find active users that only listen to a few songs per session. This is a group that would be a useful target for A/B testing to increase user engagement through improved song recommendations, UI updates, etc. Note: for the sake of this example, we're an active user as someone with more than 5 listening sessions. 
 ```
-select  user_id, 
-        avg(plays_per_session) as avg_plays_per_session 
-  from (
-    select  user_id, 
+SELECT  user_id, 
+        AVG(plays_per_session) AS avg_plays_per_session
+  FROM (
+    SELECT  user_id, 
             session_id, 
-            count(*) as plays_per_session 
-        from songplays 
-        group by 
+            count(*) AS plays_per_session 
+        FROM songplays 
+        GROUP BY
             user_id, 
             session_id
   ) plays 
-  group by user_id 
-  having count(*) > 5
-  order by avg_plays_per_session asc
-  limit 10 ;
+  GROUP BY user_id 
+  HAVING count(*) > 5
+  ORDER BY avg_plays_per_session ASC
+  LIMIT 10 ;
 ```
 
 * With a bit more song metadata, we could look for trends by artist, genre, and use that information to build song/artist recommendation algorithms.
