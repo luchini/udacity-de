@@ -10,56 +10,56 @@ time_table_drop = "DROP TABLE IF EXISTS time"
 songplay_table_create = """
 CREATE TABLE IF NOT EXISTS songplays ( 
     songplay_id serial PRIMARY KEY,
-    start_time timestamp,
-    user_id int,
-    level varchar,
+    start_time timestamp NOT NULL,
+    user_id int NOT NULL,
+    level varchar NOT NULL,
     song_id varchar,
     artist_id varchar,
-    session_id int,
-    location varchar,
-    user_agent varchar
+    session_id int NOT NULL,
+    location varchar NOT NULL,
+    user_agent varchar NOT NULL
 )
 """
 
 user_table_create = """
 CREATE TABLE IF NOT EXISTS users (
     user_id int PRIMARY KEY,
-    first_name varchar,
-    last_name varchar,
-    gender char(1),
-    level varchar
+    first_name varchar NOT NULL,
+    last_name varchar NOT NULL,
+    gender char(1) NOT NULL,
+    level varchar NOT NULL
 )
 """
 
 song_table_create = """
 CREATE TABLE IF NOT EXISTS songs (
     song_id varchar PRIMARY KEY,
-    title varchar,
-    artist_id varchar,
-    year int,
-    duration numeric
+    title varchar NOT NULL,
+    artist_id varchar NOT NULL,
+    year int NOT NULL,
+    duration numeric NOT NULL
 )
 """
 
 artist_table_create = """
 CREATE TABLE IF NOT EXISTS artists (
     artist_id varchar PRIMARY KEY,
-    name varchar,
-    location varchar,
-    latitude numeric,
-    longitude numeric
+    name varchar NOT NULL,
+    location varchar NOT NULL,
+    latitude numeric NOT NULL,
+    longitude numeric NOT NULL
 )
 """
 
 time_table_create = """
 CREATE TABLE IF NOT EXISTS time (
     start_time timestamp PRIMARY KEY,
-    hour int,
-    day int,
-    week int,
-    month int,
-    year int,
-    weekday int
+    hour int NOT NULL,
+    day int NOT NULL,
+    week int NOT NULL,
+    month int NOT NULL,
+    year int NOT NULL,
+    weekday int NOT NULL
 )
 """
 
@@ -79,6 +79,8 @@ INSERT INTO songplays (
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """)
 
+# since users can upgrade from free to paid, go through name changes or transition genders,
+# make sure we update to the latest values
 user_table_insert = ("""
 INSERT INTO users (
     user_id,
@@ -88,7 +90,12 @@ INSERT INTO users (
     level
 )
 VALUES (%s, %s, %s, %s, %s)
-ON CONFLICT (user_id) DO NOTHING
+ON CONFLICT (user_id) 
+DO UPDATE 
+    SET first_name = EXCLUDED.first_name,
+        last_name = EXCLUDED.last_name,
+        gender = EXCLUDED.gender,
+        level = EXCLUDED.level
 """)
 
 song_table_insert = ("""
