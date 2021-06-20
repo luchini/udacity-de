@@ -54,8 +54,8 @@ SELECT  t.weekday,
 * What are our most popular location markets? Note: it would be important to bring in population data into a location-based dimension table in order to better understand relative popularity.
 ```
 SELECT  location, 
-        count(distinct user_id) as user_count, 
-        count(distinct session_id) as session_count 
+        COUNT(DISTINCT user_id) AS user_count, 
+        COUNT(DISTINCT session_id) AS session_count 
     FROM songplays 
     GROUP BY location
     ORDER BY user_count DESC 
@@ -64,19 +64,19 @@ SELECT  location,
 
 * We can find active users that only listen to a few songs per session. This is a group that would be a useful target for A/B testing to increase user engagement through improved song recommendations, UI updates, etc. Note: for the sake of this example, we're an active user as someone with more than 5 listening sessions. 
 ```
-SELECT  user_id, 
-        AVG(plays_per_session) AS avg_plays_per_session
+SELECT  plays.user_id, 
+        AVG(plays.plays_per_session) AS avg_plays_per_session
   FROM (
     SELECT  user_id, 
             session_id, 
-            count(*) AS plays_per_session 
+            COUNT(*) AS plays_per_session 
         FROM songplays 
         GROUP BY
             user_id, 
             session_id
   ) plays 
-  GROUP BY user_id 
-  HAVING count(*) > 5
+  GROUP BY plays.user_id 
+  HAVING COUNT(*) > 5
   ORDER BY avg_plays_per_session ASC
   LIMIT 10 ;
 ```
