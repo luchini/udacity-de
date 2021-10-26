@@ -211,8 +211,8 @@ def main():
     input_data = "s3a://udacity-dend/"
     output_data = "s3a://" + S3_BUCKET + "/analytics/"
     
-    process_song_data(spark, input_data + "song_data/*/*/*/*json", output_data)    
-    process_log_data(spark, input_data + "log_data/*/*/*json", output_data)
+    process_song_data(spark, os.path.join(input_data, "song_data/*/*/*/*json"), output_data)    
+    process_log_data(spark, os.path.join(input_data, "log_data/*/*/*json"), output_data)
     
 if __name__ == "__main__":
     main()
