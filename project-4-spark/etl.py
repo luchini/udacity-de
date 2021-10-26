@@ -56,14 +56,14 @@ def process_song_data(spark, input_data, output_data):
     # create temp view for use later
     df_song_data.createOrReplaceTempView("songs_data")
 
-    # extract columns to create songs table
+    # extract columns to create songs table and drop duplicates
     songs_table = df_song_data.select([ \
         "song_id",
         "title",
         "artist_id",
         "year",
         "duration"
-    ])
+    ]).dropDuplicates()
     
     # write songs table to parquet files partitioned by year and artist
     songs_table.write \
@@ -71,14 +71,14 @@ def process_song_data(spark, input_data, output_data):
         .mode("overwrite") \
         .parquet(output_data + "songs.parquet")
 
-    # extract columns to create artists table
+    # extract columns to create artists table and ensure there are no duplicates
     artists_table = df_song_data.selectExpr([ \
         "artist_id", \
         "artist_name as name", \
         "artist_location as location", \
         "artist_latitude as latitude", \
         "artist_longitude as longitude" \
-    ]).distinct()
+    ]).dropDuplicates()
     
     # write artists table to parquet files
     artists_table.write \
@@ -127,15 +127,22 @@ def process_log_data(spark, input_data, output_data):
     # create temp view
     df_log_filtered.createOrReplaceTempView('log_data')
 
-    # extract columns for users table    
-    users_table = df_log_filtered \
+    # create df with most recent timestamp per user
+    df_user_temp = df_log_filtered \
         .groupBy('userId') \
-        .agg( 
-            last('firstName').alias('first_name'),
-            last('lastName').alias('last_name'),
-            last('gender').alias('gender'),
-            last('level').alias('level')
-        ).withColumnRenamed("userId", "user_id")
+        .max('ts') \
+        .withColumnRenamed('userId', 'user_id') \
+        .withColumnRenamed('max(ts)', 'max_ts')
+
+    # extract columns for users table, selecting data for the most recent user record   
+    users_table = df_log_filtered \
+        .join(df_user_temp, [df_log_filtered.ts == df_user_temp.max_ts, df_log_filtered.userId == df_user_temp.user_id]) \
+        .select( \
+            df_log_filtered.userId.alias('user_id'), \
+            df_log_filtered.firstName.alias('first_name'), \
+            df_log_filtered.lastName.alias('last_name'), \
+            df_log_filtered.gender, \
+            df_log_filtered.level ) 
     
     # write users table to parquet files
     users_table.write \
