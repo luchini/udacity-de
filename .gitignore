@@ -1,5 +1,6 @@
 *.zip
 .ipynb_checkpoints/
 .DS_Store
-dwh.cfg
+*.cfg
 .vscode/
+__pycache__/
