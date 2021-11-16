@@ -5,6 +5,9 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.postgres_operator import PostgresOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator)
+from airflow.operators.subdag_operator import SubDagOperator
+from dimension_subdag import load_dimension_tables_subdag
+
 from helpers import SqlQueries
 
 DEBUG = False
@@ -104,112 +107,24 @@ load_songplays_table = LoadFactOperator(
     redshift_conn_id="redshift"
 )
 
-load_user_dimension_table = LoadDimensionOperator(
-    task_id='Load_user_dim_table',
-    dag=dag,
-    destination_table="public.users",
-    destination_fields="""
-        userid,
-        first_name,
-        last_name,
-        gender,
-        level
-    """,
-    source_select="""
-        SELECT  se.userId,
-                se.firstName,
-                se.lastName,
-                se.gender,
-                se.level
-            FROM staging_events se
-            WHERE se.eventId = (
-                SELECT  se0.eventid
-                    FROM staging_events se0
-                    WHERE se0.userId = se.userId
-                    ORDER BY se0.ts DESC
-                    LIMIT 1
-            ) 
-    """,
-    redshift_conn_id="redshift",
-    append=True
+#
+# Create subdag task for loading dimension tables
+#
+load_dim_task_id = "load_dimension_subdag"
+dim_subdag_task = SubDagOperator(
+    subdag=load_dimension_tables_subdag(
+        parent_dag_name="sparkify_etl_dag",
+        task_id=load_dim_task_id,
+        redshift_conn_id="redshift",
+        start_date=START_DATE
+    ),
+    task_id=load_dim_task_id,
+    dag=dag
 )
 
-load_song_dimension_table = LoadDimensionOperator(
-    task_id='Load_song_dim_table',
-    dag=dag,
-    destination_table="public.songs",
-    destination_fields="""
-        songid,
-        title,
-        artistid,
-        year,
-        duration
-    """,
-    source_select="""
-        SELECT  DISTINCT
-                song_id,
-                title,
-                artist_id,
-                year,
-                duration
-            FROM public.staging_songs
-    """,
-    redshift_conn_id="redshift",
-    append=True
-)
-
-load_artist_dimension_table = LoadDimensionOperator(
-    task_id='Load_artist_dim_table',
-    dag=dag,
-    destination_table="public.artists",
-    destination_fields="""
-        artistid,
-        name,
-        location,
-        lattitude,
-        longitude
-    """,
-    source_select="""
-        SELECT  DISTINCT
-                artist_id,
-                artist_name,
-                artist_location,
-                artist_latitude,
-                artist_longitude
-            FROM public.staging_songs ;
-    """,
-    redshift_conn_id="redshift",
-    append=True
-)
-
-load_time_dimension_table = LoadDimensionOperator(
-    task_id='Load_time_dim_table',
-    dag=dag,
-    destination_table="public.time",
-    destination_fields="""
-        start_time,
-        hour,
-        day,
-        week,
-        month,
-        year,
-        weekday
-    """,
-    source_select="""
-        SELECT  DISTINCT
-                start_time,
-                EXTRACT(hour FROM start_time),
-                EXTRACT(day FROM start_time),
-                EXTRACT(week FROM start_time),
-                EXTRACT(month FROM start_time),
-                EXTRACT(year FROM start_time),
-                EXTRACT(weekday FROM start_time)
-            FROM public.songplays
-    """,
-    redshift_conn_id="redshift",
-    append=False
-)
-
+#
+# Run some quality checks on our data
+#
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     dag=dag,
@@ -237,14 +152,7 @@ create_tables_in_redshift >> stage_songs_to_redshift
 stage_events_to_redshift >> load_songplays_table
 stage_songs_to_redshift >> load_songplays_table
 
-load_songplays_table >> load_user_dimension_table
-load_songplays_table >> load_song_dimension_table
-load_songplays_table >> load_artist_dimension_table
-load_songplays_table >> load_time_dimension_table
-
-load_user_dimension_table >> run_quality_checks
-load_song_dimension_table >> run_quality_checks
-load_artist_dimension_table >> run_quality_checks
-load_time_dimension_table >> run_quality_checks
+load_songplays_table >> dim_subdag_task
+dim_subdag_task >> run_quality_checks
 
 run_quality_checks >> end_operator
