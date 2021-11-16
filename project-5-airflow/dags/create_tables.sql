@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.artists (
 );
 
 CREATE TABLE IF NOT EXISTS public.songplays (
-	playid BIGINT IDENTITY(0,1),
+	playid bigint identity(0,1),
 	start_time timestamp NOT NULL,
 	userid int4 NOT NULL,
 	"level" varchar(256),
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.songs (
 );
 
 CREATE TABLE IF NOT EXISTS public.staging_events (
+	eventid bigint identity(0,1),
 	artist varchar(256),
 	auth varchar(256),
 	firstname varchar(256),

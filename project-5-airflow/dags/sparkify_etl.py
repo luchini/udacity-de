@@ -7,9 +7,7 @@ from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator)
 from helpers import SqlQueries
 
-# AWS_KEY = os.environ.get('AWS_KEY')
-# AWS_SECRET = os.environ.get('AWS_SECRET')
-DEBUG = True
+DEBUG = False
 S3_BUCKET = "udacity-dend"
 EVENTS_KEY = "log_data/{execution_date.year}/{execution_date.month}/{ds}-events.json"
 if DEBUG:
@@ -18,28 +16,32 @@ else:
     SONGS_KEY = "song_data/"
 
 START_DATE = datetime(2018,11,1)
+END_DATE = None
+#END_DATE = datetime(2018,11,1,4,0,0)
 
-#end_date = datetime(2018,11,1,4,0,0)
 default_args = {
     'owner': 'udacity',
     'depends_on_past': False,
     'start_date': START_DATE,
+    'end_date' : END_DATE,
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
     'catchup': False,
     'email_on_retry': False    
 }
 
-dag = DAG('udac_example_dag',
+dag = DAG('sparkify_etl_dag',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
-          schedule_interval='@hourly',
+          schedule_interval='@daily', #'@hourly',
           max_active_runs=1
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
+#
 # Use a Postgres operator to create tables in redshift
+#
 create_tables_in_redshift = PostgresOperator(
     task_id="Create_tables",
     dag=dag,
@@ -54,7 +56,8 @@ stage_events_to_redshift = StageToRedshiftOperator(
     redshift_conn_id="redshift",
     aws_credentials_id="aws_credentials",
     s3_bucket=S3_BUCKET,
-    s3_key=EVENTS_KEY
+    s3_key=EVENTS_KEY,
+    json=f"s3://{S3_BUCKET}/log_json_path.json"
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
@@ -67,9 +70,6 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     s3_key=SONGS_KEY
 )
 
-#
-# TODO: resolve ID column
-#
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
@@ -123,7 +123,7 @@ load_user_dimension_table = LoadDimensionOperator(
                 se.level
             FROM staging_events se
             WHERE se.eventId = (
-                SELECT  se0.eventId
+                SELECT  se0.eventid
                     FROM staging_events se0
                     WHERE se0.userId = se.userId
                     ORDER BY se0.ts DESC
@@ -207,12 +207,21 @@ load_time_dimension_table = LoadDimensionOperator(
             FROM public.songplays
     """,
     redshift_conn_id="redshift",
-    append=True
+    append=False
 )
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
-    dag=dag
+    dag=dag,
+    redshift_conn_id="redshift",
+    sql_checks = [
+        {   "info": "time", 
+            "sql":  "SELECT COUNT(*) FROM public.time WHERE start_time IS NULL",
+            "value":  0},
+        {   "info": "artists", 
+            "sql":  "SELECT COUNT(*) FROM public.artists WHERE artistid IS NULL",
+            "value":  0}
+    ]
 )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
