@@ -1,16 +1,15 @@
-from datetime import datetime, timedelta, date
-import os
+from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.postgres_operator import PostgresOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
-                                LoadDimensionOperator, DataQualityOperator)
+                                DataQualityOperator)
 from airflow.operators.subdag_operator import SubDagOperator
 from dimension_subdag import load_dimension_tables_subdag
 
 from helpers import SqlQueries
 
-DEBUG = False
+DEBUG = True
 S3_BUCKET = "udacity-dend"
 EVENTS_KEY = "log_data/{execution_date.year}/{execution_date.month}/{ds}-events.json"
 if DEBUG:
@@ -77,33 +76,7 @@ load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
     destination_table="public.songplays",
-    destination_fields="""
-        start_time,
-        userid,
-        level,
-        songid,
-        artistid,
-        sessionid,
-        location,
-        user_agent
-    """,
-    source_select="""
-        SELECT  DISTINCT
-                (TIMESTAMP 'epoch' + se.ts/1000 * interval '1 Second'),
-                se.userId,
-                se.level,
-                ss.song_id,
-                ss.artist_id,
-                se.sessionId,
-                se.location,
-                se.userAgent
-            FROM public.staging_events se
-            INNER JOIN public.staging_songs ss
-                ON ss.artist_name = se.artist
-                AND ss.title = se.song
-                AND ss.duration = se.length
-            WHERE se.page = 'NextSong'
-    """,
+    source_select=SqlQueries.songplay_table_insert,
     redshift_conn_id="redshift"
 )
 

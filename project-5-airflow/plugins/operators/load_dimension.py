@@ -7,9 +7,7 @@ class LoadDimensionOperator(BaseOperator):
 
     """
     insert_sql_template = """
-    INSERT INTO {destination_table} (
-        {destination_fields}
-    )
+    INSERT INTO {destination_table}
     {source_select}
     """
     ui_color = '#F98866'
@@ -17,7 +15,6 @@ class LoadDimensionOperator(BaseOperator):
     @apply_defaults
     def __init__(self,
                  destination_table="",
-                 destination_fields="",
                  source_select="",
                  redshift_conn_id="",
                  append=True,
@@ -26,7 +23,6 @@ class LoadDimensionOperator(BaseOperator):
 
         Parameters:
         - destination_table
-        - destination_fields
         - source_select
         - redshift_conn_id
         - append
@@ -44,7 +40,7 @@ class LoadDimensionOperator(BaseOperator):
         
     def execute(self, context):
         """Copy to the dimension table. Optionally, wipe the table first
-        
+
         Parameters:
         - self
         - context
