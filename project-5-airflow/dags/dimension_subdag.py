@@ -10,6 +10,13 @@ def load_dimension_tables_subdag(
         task_id,
         redshift_conn_id,
         *args, **kwargs):
+    """Create and return the subdag for loading dimension tables
+    Parameters:
+        - parent_dag_name
+        - task_id
+        - redshift_conn_id
+    """
+
     dag = DAG(
         f"{parent_dag_name}.{task_id}",
         **kwargs

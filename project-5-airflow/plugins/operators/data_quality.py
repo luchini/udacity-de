@@ -11,6 +11,12 @@ class DataQualityOperator(BaseOperator):
                  redshift_conn_id="",
                  sql_checks=[],
                  *args, **kwargs):
+        """Init the Data Quality Operator
+
+        Parameters:
+        - redshift_conn_id
+        - sql_checks
+        """
 
         super(DataQualityOperator, self).__init__(*args, **kwargs)
 
@@ -21,6 +27,12 @@ class DataQualityOperator(BaseOperator):
         self.sql_checks = sql_checks
 
     def execute(self, context):
+        """Run some SQL statements against loaded data for validation
+
+        Parameters:
+        - self
+        - context
+        """
         #
         # Open a redshift connection with PostgresHook
         #

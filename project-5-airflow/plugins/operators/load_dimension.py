@@ -3,6 +3,9 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
         
 class LoadDimensionOperator(BaseOperator):
+    """Airflow operator for loading dimension tables
+
+    """
     insert_sql_template = """
     INSERT INTO {destination_table} (
         {destination_fields}
@@ -19,6 +22,15 @@ class LoadDimensionOperator(BaseOperator):
                  redshift_conn_id="",
                  append=True,
                  *args, **kwargs):
+        """Init for LoadDimensionOperator
+
+        Parameters:
+        - destination_table
+        - destination_fields
+        - source_select
+        - redshift_conn_id
+        - append
+        """
 
         super(LoadDimensionOperator, self).__init__(*args, **kwargs)
         
@@ -31,6 +43,13 @@ class LoadDimensionOperator(BaseOperator):
         self.append=append
         
     def execute(self, context):
+        """Copy to the dimension table. Optionally, wipe the table first
+        
+        Parameters:
+        - self
+        - context
+        """
+
         #
         # Open a redshift connection with PostgresHook
         #

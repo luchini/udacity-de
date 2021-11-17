@@ -3,6 +3,8 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 class LoadFactOperator(BaseOperator):
+    """ Airflow operator for loading a fact table
+    """
     insert_sql_template = """
     INSERT INTO {destination_table} (
         {destination_fields}
@@ -19,6 +21,16 @@ class LoadFactOperator(BaseOperator):
                  redshift_conn_id="",
                  *args, **kwargs):
 
+        """ Instantiate the LoadFactOperator
+
+        Parameters:
+        - destination_table
+        - destination_fields
+        - source_select
+        - redshift_conn_id
+        - append
+        """
+
         super(LoadFactOperator, self).__init__(*args, **kwargs)
         
         #
@@ -29,6 +41,12 @@ class LoadFactOperator(BaseOperator):
         self.redshift_conn_id = redshift_conn_id
         
     def execute(self, context):
+        """Copy to the fact table
+        
+        Parameters:
+        - self
+        - context
+        """
         #
         # Open a redshift connection with PostgresHook
         #

@@ -130,12 +130,15 @@ run_quality_checks = DataQualityOperator(
     dag=dag,
     redshift_conn_id="redshift",
     sql_checks = [
-        {   "info": "time", 
-            "sql":  "SELECT COUNT(*) FROM public.time WHERE start_time IS NULL",
-            "value":  0},
-        {   "info": "artists", 
-            "sql":  "SELECT COUNT(*) FROM public.artists WHERE artistid IS NULL",
-            "value":  0}
+        {   "info"  : "time", 
+            "sql"   : "SELECT COUNT(*) FROM public.time WHERE start_time IS NULL",
+            "value" : 0},
+        {   "info"  : "artists", 
+            "sql"   : "SELECT COUNT(*) FROM public.artists WHERE artistid IS NULL",
+            "value" : 0},
+        {   "info"  : "songs",
+            "sql"   : "SELECT COUNT(*) FROM public.songs WHERE artistid IS NULL",
+            "value" : 0}
     ]
 )
 
