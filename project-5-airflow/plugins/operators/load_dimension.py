@@ -7,13 +7,14 @@ class LoadDimensionOperator(BaseOperator):
 
     """
     insert_sql_template = """
-    INSERT INTO {destination_table}
+    INSERT INTO {schema}.{destination_table}
     {source_select}
     """
     ui_color = '#F98866'
     
     @apply_defaults
     def __init__(self,
+                 schema="public",
                  destination_table="",
                  source_select="",
                  redshift_conn_id="",

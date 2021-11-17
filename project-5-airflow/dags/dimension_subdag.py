@@ -27,7 +27,7 @@ def load_dimension_tables_subdag(
     load_user_dimension_table = LoadDimensionOperator(
         task_id='Load_user_dim_table',
         dag=dag,
-        destination_table="public.users",
+        destination_table="users",
         source_select=SqlQueries.user_table_insert,
         redshift_conn_id=redshift_conn_id,
         append=True
@@ -36,7 +36,7 @@ def load_dimension_tables_subdag(
     load_song_dimension_table = LoadDimensionOperator(
         task_id='Load_song_dim_table',
         dag=dag,
-        destination_table="public.songs",
+        destination_table="songs",
         source_select=SqlQueries.song_table_insert,
         redshift_conn_id=redshift_conn_id,
         append=True
@@ -45,7 +45,7 @@ def load_dimension_tables_subdag(
     load_artist_dimension_table = LoadDimensionOperator(
         task_id='Load_artist_dim_table',
         dag=dag,
-        destination_table="public.artists",
+        destination_table="artists",
         source_select=SqlQueries.artist_table_insert,
         redshift_conn_id=redshift_conn_id,
         append=True
@@ -54,7 +54,7 @@ def load_dimension_tables_subdag(
     load_time_dimension_table = LoadDimensionOperator(
         task_id='Load_time_dim_table',
         dag=dag,
-        destination_table="public.time",
+        destination_table="time",
         source_select=SqlQueries.time_table_insert,
         redshift_conn_id=redshift_conn_id,
         append=False

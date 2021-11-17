@@ -9,7 +9,7 @@ class StageToRedshiftOperator(BaseOperator):
     template_fields = ("s3_key",)
     ui_color = '#358140'
     copy_sql = """
-        COPY {}
+        COPY {}.{}
         FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
@@ -18,6 +18,7 @@ class StageToRedshiftOperator(BaseOperator):
     
     @apply_defaults
     def __init__(self,
+                schema="public",
                  table="",
                  redshift_conn_id="",
                  aws_credentials_id="", 
@@ -40,6 +41,7 @@ class StageToRedshiftOperator(BaseOperator):
         #
         # Map params
         #
+        self.schema = schema
         self.table = table
         self.redshift_conn_id = redshift_conn_id
         self.aws_credentials_id = aws_credentials_id
@@ -69,7 +71,7 @@ class StageToRedshiftOperator(BaseOperator):
         # Delete existing data
         #
         self.log.info(f"Clearing data from destination Redshift table {self.table}")
-        redshift.run(f"DELETE FROM {self.table}")
+        redshift.run(f"DELETE FROM {self.schema}.{self.table}")
         
         #
         # Render the s3 key using context variables
@@ -81,6 +83,7 @@ class StageToRedshiftOperator(BaseOperator):
         # Format copy statement
         #
         formatted_sql = StageToRedshiftOperator.copy_sql.format(
+            self.schema,
             self.table,
             s3_path,
             credentials.access_key,
