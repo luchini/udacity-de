@@ -9,8 +9,12 @@ from dimension_subdag import load_dimension_tables_subdag
 
 from helpers import SqlQueries
 
+#
+# Set variables
+#
 S3_BUCKET = "udacity-dend"
 EVENTS_KEY = "log_data/{execution_date.year}/{execution_date.month}/{ds}-events.json"
+START_DATE = datetime(2018,11,1)
 
 #
 # Set debug variables
@@ -18,10 +22,12 @@ EVENTS_KEY = "log_data/{execution_date.year}/{execution_date.month}/{ds}-events.
 DEBUG = False
 if DEBUG:
     SONGS_KEY = "song_data/A/A/A/"
-    END_DATE = datetime(2018,11,1,4,0,0)
+    END_DATE = datetime(2018,11,2,0,0,0)
+    SCHEDULE = '@daily'
 else:
     SONGS_KEY = "song_data/"
     END_DATE = None
+    SCHEDULE = '@hourly'
 
 #
 # Construct default arguments
@@ -40,7 +46,7 @@ default_args = {
 dag = DAG('sparkify_etl_dag',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
-          schedule_interval='@daily', #'@hourly',
+          schedule_interval=SCHEDULE,
           max_active_runs=1
         )
 
