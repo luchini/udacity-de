@@ -9,18 +9,23 @@ from dimension_subdag import load_dimension_tables_subdag
 
 from helpers import SqlQueries
 
-DEBUG = True
 S3_BUCKET = "udacity-dend"
 EVENTS_KEY = "log_data/{execution_date.year}/{execution_date.month}/{ds}-events.json"
+
+#
+# Set debug variables
+#
+DEBUG = False
 if DEBUG:
     SONGS_KEY = "song_data/A/A/A/"
+    END_DATE = datetime(2018,11,1,4,0,0)
 else:
     SONGS_KEY = "song_data/"
+    END_DATE = None
 
-START_DATE = datetime(2018,11,1)
-END_DATE = None
-#END_DATE = datetime(2018,11,1,4,0,0)
-
+#
+# Construct default arguments
+#
 default_args = {
     'owner': 'udacity',
     'depends_on_past': False,
@@ -129,6 +134,7 @@ stage_events_to_redshift >> load_songplays_table
 stage_songs_to_redshift >> load_songplays_table
 
 load_songplays_table >> dim_subdag_task
+
 dim_subdag_task >> run_quality_checks
 
 run_quality_checks >> end_operator
